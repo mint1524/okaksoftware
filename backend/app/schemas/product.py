@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -16,6 +17,8 @@ class ProductVariantOut(ORMModel):
     payment_url: str | None
     sort_order: int
     metadata: dict[str, Any] | None = Field(alias="extra")
+    created_at: datetime
+    updated_at: datetime
 
 
 class ProductOut(ORMModel):
@@ -29,6 +32,8 @@ class ProductOut(ORMModel):
     is_active: bool
     metadata: dict[str, Any] | None = Field(alias="extra")
     variants: list[ProductVariantOut]
+    created_at: datetime
+    updated_at: datetime
 
 
 class ProductListResponse(BaseModel):

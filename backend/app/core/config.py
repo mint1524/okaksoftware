@@ -45,8 +45,11 @@ class Settings(BaseSettings):
 
     log_level: Literal["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
+    admin_password_hash: str = Field(default="", description="Bcrypt hash for admin panel access")
+    admin_jwt_secret: str = Field(default="change_me", description="Secret key for admin JWT tokens")
+    admin_token_expire_minutes: int = 60
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
-

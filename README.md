@@ -26,6 +26,7 @@ docker compose up -d
 После запуска:
 - Backend: `http://localhost:8000/api`
 - React-просмотрщик (через Nginx): `http://localhost/`
+- Админ-панель: `http://localhost:4174` (в продакшене через `shop.kcbot.ru`)
 - Телеграм-бот запускается автоматически (long polling).
 
 ## Деплой на сервер (Ubuntu 22.04 пример)
@@ -62,14 +63,15 @@ docker compose up -d
 # первичная выдача сертификатов Let's Encrypt (nginx уже слушает 80 порт)
 docker compose run --rm certbot certonly \
   --webroot -w /var/www/certbot \
-  -d gpt.kcbot.ru -d vpn.kcbot.ru \
+  -d gpt.kcbot.ru -d vpn.kcbot.ru -d shop.kcbot.ru \
   --agree-tos -m admin@kcbot.ru --no-eff-email
 
 # переключаем nginx в https-режим
 docker compose restart nginx
 
 # пример cron-задачи для автообновления сертификатов
-# 0 5 * * * cd /opt/okak && docker compose run --rm certbot renew --webroot -w /var/www/certbot && docker compose exec nginx nginx -s reload
+# 0 5 * * * cd /opt/okak && docker compose run --rm certbot renew --webroot -w /var/www/certbot \\
+#   && docker compose exec nginx nginx -s reload
 ```
 
 ## Настройка VPN файлов
@@ -82,6 +84,23 @@ docker compose restart nginx
     android/app.apk
   ```
 - В БД (таблица `file_assets`) создайте записи для каждого файла (`product_type = 'vpn'`, `path = windows/openvpn.exe` и т.д.). В `metadata` токена фронтенд автоматически сформирует прямые ссылки `https://vpn.kcbot.ru/static/vpn/...`.
+
+## Админ-панель (shop.kcbot.ru)
+
+- Домен `shop.kcbot.ru` проксируется на отдельный React-приложение (`admin/`).
+- Аутентификация по паролю, JWT хранится в localStorage. Сбросить пароль можно только вручную: сгенерируйте новый хэш и обновите `.env`.
+  ```bash
+  docker compose run --rm backend python -m app.scripts.hash_admin_password
+  ```
+  Полученный хэш впишите в `OKAK_ADMIN_PASSWORD_HASH` и перезапустите бэкенд.
+- Остальные переменные:
+  - `OKAK_ADMIN_JWT_SECRET` — секрет для подписания админских токенов (замените на случайный).
+  - `OKAK_ADMIN_TOKEN_EXPIRE_MINUTES` — время жизни токена (по умолчанию 60 минут).
+- В админке доступны:
+  - управление товарами и тарифами (CRUD, JSON metadata);
+  - список покупок с фильтрами по статусу и типу товара;
+  - управление файлами VPN (привязка к `file_assets`).
+- API админки: `/api/admin/panel/*`. Для интеграции используйте Bearer-токен, полученный на `/api/admin/panel/auth/login`.
 
 ## Каталог и тарифы
 

@@ -27,6 +27,8 @@ class PurchaseSessionOut(ORMModel):
     expires_at: datetime | None
     delivered_at: datetime | None
     metadata: dict[str, Any] | None = Field(alias="extra")
+    created_at: datetime
+    updated_at: datetime
 
 
 class PurchaseCreateResponse(BaseModel):

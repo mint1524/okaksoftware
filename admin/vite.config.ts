@@ -5,10 +5,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 4174,
-    host: true
+    host: true,
+    allowedHosts: ["shop.kcbot.ru"],
+    strictPort: true
   },
   preview: {
     port: 4174,
-    host: true
+    host: true,
+    allowedHosts: ["shop.kcbot.ru"],
+    strictPort: true
   }
 });

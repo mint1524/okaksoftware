@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .common import ORMModel
 
@@ -26,7 +26,7 @@ class PurchaseSessionOut(ORMModel):
     domain_type: str | None
     expires_at: datetime | None
     delivered_at: datetime | None
-    metadata: dict[str, Any] | None
+    metadata: dict[str, Any] | None = Field(alias="extra")
 
 
 class PurchaseCreateResponse(BaseModel):

@@ -45,14 +45,6 @@ class PurchaseSession(Base, TimestampMixin):
     variant: Mapped["ProductVariant"] = relationship(back_populates="purchases")
     events: Mapped[list["TokenEvent"]] = relationship(back_populates="purchase", cascade="all, delete-orphan")
 
-    @property
-    def metadata(self) -> dict | None:  # pragma: no cover
-        return self.extra
-
-    @metadata.setter
-    def metadata(self, value: dict | None) -> None:  # pragma: no cover
-        self.extra = value
-
 
 class TokenEvent(Base):
     __tablename__ = "token_events"

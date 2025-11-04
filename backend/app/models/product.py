@@ -23,14 +23,6 @@ class Product(Base, TimestampMixin):
     variants: Mapped[list["ProductVariant"]] = relationship(back_populates="product", cascade="all, delete-orphan")
     purchases: Mapped[list["PurchaseSession"]] = relationship(back_populates="product")
 
-    @property
-    def metadata(self) -> dict | None:  # pragma: no cover - compatibility helper
-        return self.extra
-
-    @metadata.setter
-    def metadata(self, value: dict | None) -> None:  # pragma: no cover - compatibility helper
-        self.extra = value
-
 
 class ProductVariant(Base, TimestampMixin):
     __tablename__ = "product_variants"
@@ -47,11 +39,3 @@ class ProductVariant(Base, TimestampMixin):
 
     product: Mapped[Product] = relationship(back_populates="variants")
     purchases: Mapped[list["PurchaseSession"]] = relationship(back_populates="variant")
-
-    @property
-    def metadata(self) -> dict | None:  # pragma: no cover
-        return self.extra
-
-    @metadata.setter
-    def metadata(self, value: dict | None) -> None:  # pragma: no cover
-        self.extra = value

@@ -32,9 +32,13 @@ docker compose up -d
 
 ```bash
 sudo apt update
-sudo apt install -y git curl docker.io docker-compose-plugin nginx certbot python3-certbot-nginx postgresql postgresql-contrib
+sudo apt install -y git curl docker.io docker-compose-plugin postgresql postgresql-contrib
 sudo usermod -aG docker $USER
 newgrp docker
+
+# если на сервере уже запущен nginx/apache, освободите порт 80
+sudo systemctl stop nginx || true
+sudo systemctl disable nginx || true
 
 # подготавливаем PostgreSQL
 sudo -u postgres psql <<'SQL'
@@ -50,18 +54,23 @@ git clone https://github.com/mint1524/okaksoftware.git .
 cp .env.example .env
 nano .env   # добавьте реальные токены, пароли и домены
 
-# сборка и запуск
+# сборка и запуск (nginx стартует в http-режиме, пока нет сертификатов)
 docker compose build
 docker compose run --rm migrate
 docker compose up -d
 
-# настраиваем nginx certbot
-sudo cp infra/nginx/nginx.conf /etc/nginx/nginx.conf
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d gpt.kcbot.ru -d vpn.kcbot.ru --agree-tos -m admin@kcbot.ru
-```
+# первичная выдача сертификатов Let's Encrypt (nginx уже слушает 80 порт)
+docker compose run --rm certbot certonly \
+  --webroot -w /var/www/certbot \
+  -d gpt.kcbot.ru -d vpn.kcbot.ru \
+  --agree-tos -m admin@kcbot.ru --no-eff-email
 
-> **Важно:** После выдачи сертификатов certbot создаст отдельные серверные блоки. Проверьте что proxy-пути `/api/`, `/static/vpn/` и `/` соответствуют конфигурации из репозитория.
+# переключаем nginx в https-режим
+docker compose restart nginx
+
+# пример cron-задачи для автообновления сертификатов
+# 0 5 * * * cd /opt/okak && docker compose run --rm certbot renew --webroot -w /var/www/certbot && docker compose exec nginx nginx -s reload
+```
 
 ## Настройка VPN файлов
 

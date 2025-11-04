@@ -1,5 +1,3 @@
-version: "3.10"
-
 services:
   db:
     image: postgres:15
@@ -43,15 +41,28 @@ services:
 
   nginx:
     image: nginx:1.25-alpine
+    entrypoint: ["/docker-entrypoint-custom.sh"]
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/templates:/etc/nginx/templates:ro
+      - ./infra/nginx/docker-entrypoint.sh:/docker-entrypoint-custom.sh:ro
       - ./infra/static/vpn:/srv/static/vpn:ro
+      - letsencrypt:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
     depends_on:
       - backend
       - web
     ports:
       - "80:80"
+      - "443:443"
     restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    profiles:
+      - certbot
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
 
   migrate:
     build:
@@ -67,3 +78,5 @@ services:
 
 volumes:
   db_data: {}
+  letsencrypt: {}
+  certbot-webroot: {}

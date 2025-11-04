@@ -18,10 +18,18 @@ class Product(Base, TimestampMixin):
     support_contact: Mapped[str | None] = mapped_column(String(120))
     domain_hint: Mapped[str | None] = mapped_column(String(120))
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    metadata: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    extra: Mapped[dict | None] = mapped_column("metadata", JSONB, default=dict)
 
     variants: Mapped[list["ProductVariant"]] = relationship(back_populates="product", cascade="all, delete-orphan")
     purchases: Mapped[list["PurchaseSession"]] = relationship(back_populates="product")
+
+    @property
+    def metadata(self) -> dict | None:  # pragma: no cover - compatibility helper
+        return self.extra
+
+    @metadata.setter
+    def metadata(self, value: dict | None) -> None:  # pragma: no cover - compatibility helper
+        self.extra = value
 
 
 class ProductVariant(Base, TimestampMixin):
@@ -35,8 +43,15 @@ class ProductVariant(Base, TimestampMixin):
     digiseller_product_id: Mapped[str | None] = mapped_column(String(64))
     payment_url: Mapped[str | None] = mapped_column(String(512))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
-    metadata: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    extra: Mapped[dict | None] = mapped_column("metadata", JSONB, default=dict)
 
     product: Mapped[Product] = relationship(back_populates="variants")
     purchases: Mapped[list["PurchaseSession"]] = relationship(back_populates="variant")
 
+    @property
+    def metadata(self) -> dict | None:  # pragma: no cover
+        return self.extra
+
+    @metadata.setter
+    def metadata(self, value: dict | None) -> None:  # pragma: no cover
+        self.extra = value

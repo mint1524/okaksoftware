@@ -70,7 +70,7 @@ async def digiseller_webhook(
     else:
         await _append_event(session, purchase, TokenEventType.OPENED, payload={"status": status_lower})
 
-    purchase.metadata = (purchase.metadata or {}) | {"digiseller": payload.details or {}}
+    purchase.extra = (purchase.extra or {}) | {"digiseller": payload.details or {}}
     await session.commit()
 
     response = {"status": "ok", "purchase_id": purchase.id, "current_status": purchase.status}

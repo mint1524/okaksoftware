@@ -56,7 +56,7 @@ async def fetch_token_details(token: str, session: AsyncSession = Depends(get_db
     manager = TokenManager(settings)
     domain = manager.domain_for_type(purchase.domain_type or purchase.product.type)
 
-    metadata = dict(purchase.metadata or {})
+    metadata = dict(purchase.extra or {})
     if purchase.product.type == "vpn":
         assets = await session.execute(select(FileAsset).where(FileAsset.product_type == "vpn"))
         downloads = [
@@ -68,8 +68,8 @@ async def fetch_token_details(token: str, session: AsyncSession = Depends(get_db
         ]
         if downloads:
             metadata.setdefault("downloads", downloads)
-    if purchase.product.metadata:
-        metadata.setdefault("product", purchase.product.metadata)
+    if purchase.product.extra:
+        metadata.setdefault("product", purchase.product.extra)
 
     await _append_event(session, purchase, TokenEventType.OPENED)
     await session.commit()
@@ -96,9 +96,9 @@ async def submit_token_payload(
     purchase = await _get_purchase_or_404(token, session)
     await _ensure_active(purchase, session)
 
-    metadata = purchase.metadata or {}
+    metadata = purchase.extra or {}
     metadata["submitted_payload"] = payload.data
-    purchase.metadata = metadata
+    purchase.extra = metadata
     await _append_event(session, purchase, TokenEventType.OPENED, payload={"submitted": payload.data})
     await session.commit()
 

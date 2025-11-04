@@ -38,12 +38,20 @@ class PurchaseSession(Base, TimestampMixin):
     domain_type: Mapped[str | None] = mapped_column(String(50))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    metadata: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    extra: Mapped[dict | None] = mapped_column("metadata", JSONB, default=dict)
 
     user: Mapped["User"] = relationship(back_populates="purchases")
     product: Mapped["Product"] = relationship(back_populates="purchases")
     variant: Mapped["ProductVariant"] = relationship(back_populates="purchases")
     events: Mapped[list["TokenEvent"]] = relationship(back_populates="purchase", cascade="all, delete-orphan")
+
+    @property
+    def metadata(self) -> dict | None:  # pragma: no cover
+        return self.extra
+
+    @metadata.setter
+    def metadata(self, value: dict | None) -> None:  # pragma: no cover
+        self.extra = value
 
 
 class TokenEvent(Base):

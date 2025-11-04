@@ -15,6 +15,9 @@ def main() -> None:
     hashed = hash_password(password)
     print("Add this value to OKAK_ADMIN_PASSWORD_HASH:")
     print(hashed)
+    escaped = hashed.replace("$", "$$")
+    print("\nIf you are placing it into docker-compose .env, use escaped form:")
+    print(escaped)
 
 
 if __name__ == "__main__":

@@ -92,7 +92,7 @@ docker compose restart nginx
   ```bash
   docker compose run --rm backend python -m app.scripts.hash_admin_password
   ```
-  Полученный хэш впишите в `OKAK_ADMIN_PASSWORD_HASH` и перезапустите бэкенд.
+  Скрипт выводит исходный хэш и строку с экранированными `$` (для `.env` в docker compose используйте вариант с `$$`). После обновления `.env` перезапустите бэкенд.
 - Остальные переменные:
   - `OKAK_ADMIN_JWT_SECRET` — секрет для подписания админских токенов (замените на случайный).
   - `OKAK_ADMIN_TOKEN_EXPIRE_MINUTES` — время жизни токена (по умолчанию 60 минут).

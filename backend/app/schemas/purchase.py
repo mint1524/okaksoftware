@@ -20,7 +20,8 @@ class PurchaseCreate(BaseModel):
 class PurchaseSessionOut(ORMModel):
     id: int
     status: str
-    digiseller_order_id: str | None
+    payment_provider: str
+    payment_id: str | None
     invoice_url: str | None
     token: str | None
     domain_type: str | None

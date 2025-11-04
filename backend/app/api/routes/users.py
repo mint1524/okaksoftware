@@ -62,7 +62,8 @@ async def get_user_purchases(telegram_id: int, session: AsyncSession = Depends(g
             PurchaseWithProductOut(
                 id=item.id,
                 status=item.status,
-                digiseller_order_id=item.digiseller_order_id,
+                payment_provider=item.payment_provider,
+                payment_id=item.payment_id,
                 invoice_url=item.invoice_url,
                 token=item.token,
                 domain_type=item.domain_type,

@@ -444,7 +444,7 @@ const ProductsPage = () => {
                           required
                         />
                         <input
-                          placeholder="Digiseller ID"
+                          placeholder="Внешний ID"
                           value={variantEditForm.digiseller_product_id}
                           onChange={(e) =>
                             setVariantEditForm((prev) => ({ ...prev, digiseller_product_id: e.target.value }))
@@ -499,7 +499,7 @@ const ProductsPage = () => {
                     required
                   />
                   <input
-                    placeholder="Digiseller ID"
+                    placeholder="Внешний ID"
                     value={(variantForms[product.id] || defaultVariantForm()).digiseller_product_id}
                     onChange={(e) => handleVariantFormChange(product.id, "digiseller_product_id", e.target.value)}
                   />

@@ -27,13 +27,11 @@ class Settings(BaseSettings):
     domain_gpt: str = "gpt.kcbot.ru"
     domain_vpn: str = "vpn.kcbot.ru"
 
-    digiseller_seller_id: str = Field(default="", description="Digiseller seller identifier.")
-    digiseller_api_key: str = Field(default="", description="Digiseller API key.")
-    digiseller_secret: str = Field(default="", description="Secret for webhook signature validation.")
-    digiseller_base_url: AnyUrl = Field(
-        default="https://api.digiseller.ru",
-        description="Base URL for Digiseller REST API.",
-    )
+    yoomoney_shop_id: str = Field(default="", description="YooMoney shop identifier")
+    yoomoney_secret_key: str = Field(default="", description="YooMoney secret key")
+    yoomoney_webhook_secret: str = Field(default="", description="Shared secret for webhook validation")
+    yoomoney_api_base_url: AnyUrl | None = Field(default="https://api.yookassa.ru/v3")
+    yoomoney_return_url: AnyUrl | None = None
 
     scheduler_enabled: bool = True
     cleanup_cron: str = "0 * * * *"  # every hour

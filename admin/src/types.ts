@@ -40,7 +40,8 @@ export interface AdminSummary {
 export interface Purchase {
   id: number;
   status: string;
-  digiseller_order_id?: string | null;
+  payment_provider: string;
+  payment_id?: string | null;
   invoice_url?: string | null;
   token?: string | null;
   domain_type?: string | null;

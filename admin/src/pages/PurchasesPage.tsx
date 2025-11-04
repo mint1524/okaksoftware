@@ -70,6 +70,7 @@ const PurchasesPage = () => {
               <tr>
                 <th>ID</th>
                 <th>Статус</th>
+                <th>Платеж</th>
                 <th>Товар</th>
                 <th>Тариф</th>
                 <th>Token URL</th>
@@ -82,6 +83,10 @@ const PurchasesPage = () => {
                 <tr key={purchase.id}>
                   <td>{purchase.id}</td>
                   <td>{purchase.status}</td>
+                  <td>
+                    <div>{purchase.payment_provider}</div>
+                    <small>{purchase.payment_id || "—"}</small>
+                  </td>
                   <td>
                     {purchase.product_title}
                     <br />

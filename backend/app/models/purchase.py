@@ -32,7 +32,8 @@ class PurchaseSession(Base, TimestampMixin):
     variant_id: Mapped[int] = mapped_column(ForeignKey("product_variants.id", ondelete="CASCADE"), nullable=False)
 
     status: Mapped[str] = mapped_column(String(32), nullable=False, default=PurchaseStatus.PENDING.value)
-    digiseller_order_id: Mapped[str | None] = mapped_column(String(120), index=True)
+    payment_provider: Mapped[str] = mapped_column(String(64), nullable=False, default="yoomoney")
+    payment_id: Mapped[str | None] = mapped_column(String(120), index=True)
     invoice_url: Mapped[str | None] = mapped_column(String(512))
     token: Mapped[str | None] = mapped_column(String(128), unique=True, index=True)
     domain_type: Mapped[str | None] = mapped_column(String(50))

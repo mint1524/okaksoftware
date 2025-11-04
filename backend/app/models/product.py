@@ -32,7 +32,7 @@ class ProductVariant(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="RUB")
-    digiseller_product_id: Mapped[str | None] = mapped_column(String(64))
+    external_id: Mapped[str | None] = mapped_column(String(64))
     payment_url: Mapped[str | None] = mapped_column(String(512))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     extra: Mapped[dict | None] = mapped_column("metadata", JSONB, default=dict)

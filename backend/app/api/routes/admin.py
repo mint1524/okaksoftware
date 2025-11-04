@@ -1,83 +1,83 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ...api.deps import get_app_settings, get_db_session
+from ...core.config import Settings
 from ...models import PurchaseSession, TokenEvent
 from ...models.enums import PurchaseStatus, TokenEventType
-from ...services.digiseller import DigisellerClient
 from ...services.tokens import TokenManager
+from ...services.yoomoney_wallet import YooMoneyWalletClient, get_yoomoney_wallet_client
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-class DigisellerWebhookPayload(BaseModel):
-    order_id: str
-    status: str
-    details: dict[str, Any] | None = None
+class YooMoneyCheckRequest(BaseModel):
+    purchase_id: int | None = None
+    payment_label: str | None = None
 
 
-async def _append_event(session: AsyncSession, purchase: PurchaseSession, event_type: TokenEventType, payload: dict | None = None) -> None:
-    event = TokenEvent(purchase_id=purchase.id, event_type=event_type.value, payload=payload or {})
-    session.add(event)
-    await session.flush()
-
-
-@router.post("/digiseller/webhook")
-async def digiseller_webhook(
-    payload: DigisellerWebhookPayload,
+@router.post("/payments/yoomoney/check")
+async def check_yoomoney_payment(
+    payload: YooMoneyCheckRequest,
     session: AsyncSession = Depends(get_db_session),
-    settings=Depends(get_app_settings),
-    signature: str | None = Header(default=None, alias="X-Digiseller-Signature"),
+    settings: Settings = Depends(get_app_settings),
+    wallet: YooMoneyWalletClient = Depends(get_yoomoney_wallet_client),
 ) -> dict[str, Any]:
-    if settings.digiseller_secret and not signature:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing webhook signature")
+    if not payload.purchase_id and not payload.payment_label:
+        raise HTTPException(status_code=400, detail="purchase_id or payment_label is required")
 
-    if settings.digiseller_secret:
-        if not DigisellerClient.verify_signature(settings.digiseller_secret, signature or "", payload.model_dump()):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
+    stmt = select(PurchaseSession).options(selectinload(PurchaseSession.product))
+    if payload.purchase_id:
+        stmt = stmt.where(PurchaseSession.id == payload.purchase_id)
+    elif payload.payment_label:
+        stmt = stmt.where(PurchaseSession.payment_label == payload.payment_label)
 
-    stmt = (
-        select(PurchaseSession)
-        .options(selectinload(PurchaseSession.product))
-        .where(PurchaseSession.digiseller_order_id == payload.order_id)
-    )
     purchase = await session.scalar(stmt)
     if not purchase:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Purchase session not found")
+        raise HTTPException(status_code=404, detail="Purchase not found")
 
+    if purchase.payment_provider != "yoomoney_wallet" or not purchase.payment_label:
+        return {"status": purchase.status, "message": "Not a YooMoney wallet payment"}
+
+    check = await wallet.check_payment(purchase.payment_label, purchase.payment_amount)
     manager = TokenManager(settings)
-    status_lower = payload.status.lower()
+    response: dict[str, Any] = {
+        "status": purchase.status,
+        "payment_label": purchase.payment_label,
+        "payment_amount": purchase.payment_amount,
+        "payment_currency": purchase.payment_currency,
+        "checked": bool(check.success),
+    }
 
-    if status_lower in {"paid", "pay", "completed", "complete"}:
+    if check.success:
         purchase.status = PurchaseStatus.PAID.value
+        if check.amount is not None:
+            purchase.payment_amount = check.amount
+        if check.currency:
+            purchase.payment_currency = check.currency
         if not purchase.token:
             token = manager.generate_token()
             purchase.token = token
             purchase.expires_at = manager.expires_at()
-            await _append_event(session, purchase, TokenEventType.ISSUED, payload={"order_id": payload.order_id})
-    elif status_lower in {"refunded", "cancelled", "canceled"}:
-        purchase.status = PurchaseStatus.REFUNDED.value
-        purchase.token = None
-        await _append_event(session, purchase, TokenEventType.FAILED, payload={"status": status_lower})
+            session.add(
+                TokenEvent(
+                    purchase_id=purchase.id,
+                    event_type=TokenEventType.ISSUED.value,
+                    payload={"operation_id": check.operation_id, "source": "admin-check"},
+                )
+            )
+            domain = manager.domain_for_type(purchase.domain_type or (purchase.product.type if purchase.product else ""))
+            response["token_url"] = manager.build_link(domain, token)
+        response["status"] = purchase.status
+        await session.commit()
     else:
-        await _append_event(session, purchase, TokenEventType.OPENED, payload={"status": status_lower})
-
-    purchase.extra = (purchase.extra or {}) | {"digiseller": payload.details or {}}
-    await session.commit()
-
-    response = {"status": "ok", "purchase_id": purchase.id, "current_status": purchase.status}
-
-    if purchase.token:
-        domain = manager.domain_for_type(purchase.domain_type or purchase.product.type)
-        response["token_url"] = manager.build_link(domain, purchase.token)
-        response["expires_at"] = purchase.expires_at
+        await session.commit()
 
     return response

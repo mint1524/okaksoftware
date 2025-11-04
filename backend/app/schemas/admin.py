@@ -56,7 +56,7 @@ class VariantCreate(BaseModel):
     name: str
     price: float
     currency: str = "RUB"
-    digiseller_product_id: str | None = None
+    external_id: str | None = None
     payment_url: str | None = None
     sort_order: int = 0
     metadata: dict[str, Any] | None = None
@@ -66,7 +66,7 @@ class VariantUpdate(BaseModel):
     name: str | None = None
     price: float | None = None
     currency: str | None = None
-    digiseller_product_id: str | None = None
+    external_id: str | None = None
     payment_url: str | None = None
     sort_order: int | None = None
     metadata: dict[str, Any] | None = None

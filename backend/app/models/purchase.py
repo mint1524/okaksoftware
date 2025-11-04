@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, text
+from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,7 +32,10 @@ class PurchaseSession(Base, TimestampMixin):
     variant_id: Mapped[int] = mapped_column(ForeignKey("product_variants.id", ondelete="CASCADE"), nullable=False)
 
     status: Mapped[str] = mapped_column(String(32), nullable=False, default=PurchaseStatus.PENDING.value)
-    digiseller_order_id: Mapped[str | None] = mapped_column(String(120), index=True)
+    payment_provider: Mapped[str] = mapped_column(String(64), nullable=False, default="yoomoney_wallet")
+    payment_label: Mapped[str | None] = mapped_column(String(120), unique=True)
+    payment_amount: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    payment_currency: Mapped[str | None] = mapped_column(String(8))
     invoice_url: Mapped[str | None] = mapped_column(String(512))
     token: Mapped[str | None] = mapped_column(String(128), unique=True, index=True)
     domain_type: Mapped[str | None] = mapped_column(String(50))

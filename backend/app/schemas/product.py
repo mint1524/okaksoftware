@@ -13,7 +13,7 @@ class ProductVariantOut(ORMModel):
     name: str
     price: float
     currency: str
-    digiseller_product_id: str | None
+    external_id: str | None
     payment_url: str | None
     sort_order: int
     metadata: dict[str, Any] | None = Field(alias="extra")

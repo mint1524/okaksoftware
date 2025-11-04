@@ -161,16 +161,16 @@ async def admin_create_variant(
     product = await session.get(Product, product_id)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
-    variant = ProductVariant(
-        product_id=product_id,
-        name=payload.name,
-        price=payload.price,
-        currency=payload.currency,
-        digiseller_product_id=payload.digiseller_product_id,
-        payment_url=payload.payment_url,
-        sort_order=payload.sort_order,
-        extra=payload.metadata or {},
-    )
+        variant = ProductVariant(
+            product_id=product_id,
+            name=payload.name,
+            price=payload.price,
+            currency=payload.currency,
+            external_id=payload.external_id,
+            payment_url=payload.payment_url,
+            sort_order=payload.sort_order,
+            extra=payload.metadata or {},
+        )
     session.add(variant)
     await session.flush()
     await session.commit()

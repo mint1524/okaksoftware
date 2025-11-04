@@ -3,7 +3,7 @@ export interface ProductVariant {
   name: string;
   price: number;
   currency: string;
-  digiseller_product_id?: string | null;
+  external_id?: string | null;
   payment_url?: string | null;
   sort_order: number;
   metadata?: Record<string, unknown> | null;
@@ -40,7 +40,10 @@ export interface AdminSummary {
 export interface Purchase {
   id: number;
   status: string;
-  digiseller_order_id?: string | null;
+  payment_provider: string;
+  payment_label?: string | null;
+  payment_amount?: number | null;
+  payment_currency?: string | null;
   invoice_url?: string | null;
   token?: string | null;
   domain_type?: string | null;

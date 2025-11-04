@@ -70,6 +70,7 @@ const PurchasesPage = () => {
               <tr>
                 <th>ID</th>
                 <th>Статус</th>
+                <th>Платёж</th>
                 <th>Товар</th>
                 <th>Тариф</th>
                 <th>Token URL</th>
@@ -82,6 +83,15 @@ const PurchasesPage = () => {
                 <tr key={purchase.id}>
                   <td>{purchase.id}</td>
                   <td>{purchase.status}</td>
+                  <td>
+                    <div>{purchase.payment_provider}</div>
+                    {purchase.payment_label && <small>Label: {purchase.payment_label}</small>}
+                    {purchase.payment_amount != null && (
+                      <small>
+                        {purchase.payment_amount} {purchase.payment_currency || "RUB"}
+                      </small>
+                    )}
+                  </td>
                   <td>
                     {purchase.product_title}
                     <br />

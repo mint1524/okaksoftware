@@ -37,7 +37,7 @@ interface VariantFormState {
   name: string;
   price: string;
   currency: string;
-  digiseller_product_id: string;
+  external_id: string;
   payment_url: string;
   sort_order: string;
   metadata: string;
@@ -47,7 +47,7 @@ const defaultVariantForm = (): VariantFormState => ({
   name: "",
   price: "0",
   currency: "RUB",
-  digiseller_product_id: "",
+  external_id: "",
   payment_url: "",
   sort_order: "0",
   metadata: ""
@@ -212,7 +212,7 @@ const ProductsPage = () => {
         name: form.name,
         price,
         currency: form.currency,
-        digiseller_product_id: form.digiseller_product_id || null,
+        external_id: form.external_id || null,
         payment_url: form.payment_url || null,
         sort_order
       };
@@ -235,7 +235,7 @@ const ProductsPage = () => {
       name: variant.name,
       price: variant.price.toString(),
       currency: variant.currency,
-      digiseller_product_id: variant.digiseller_product_id || "",
+      external_id: variant.external_id || "",
       payment_url: variant.payment_url || "",
       sort_order: variant.sort_order.toString(),
       metadata: variant.metadata ? JSON.stringify(variant.metadata, null, 2) : ""
@@ -260,7 +260,7 @@ const ProductsPage = () => {
         name: variantEditForm.name,
         price,
         currency: variantEditForm.currency,
-        digiseller_product_id: variantEditForm.digiseller_product_id || null,
+        external_id: variantEditForm.external_id || null,
         payment_url: variantEditForm.payment_url || null,
         sort_order
       };
@@ -444,10 +444,10 @@ const ProductsPage = () => {
                           required
                         />
                         <input
-                          placeholder="Digiseller ID"
-                          value={variantEditForm.digiseller_product_id}
+                          placeholder="Внешний ID"
+                          value={variantEditForm.external_id}
                           onChange={(e) =>
-                            setVariantEditForm((prev) => ({ ...prev, digiseller_product_id: e.target.value }))
+                            setVariantEditForm((prev) => ({ ...prev, external_id: e.target.value }))
                           }
                         />
                         <input
@@ -499,9 +499,9 @@ const ProductsPage = () => {
                     required
                   />
                   <input
-                    placeholder="Digiseller ID"
-                    value={(variantForms[product.id] || defaultVariantForm()).digiseller_product_id}
-                    onChange={(e) => handleVariantFormChange(product.id, "digiseller_product_id", e.target.value)}
+                    placeholder="Внешний ID"
+                    value={(variantForms[product.id] || defaultVariantForm()).external_id}
+                    onChange={(e) => handleVariantFormChange(product.id, "external_id", e.target.value)}
                   />
                   <input
                     placeholder="Payment URL"

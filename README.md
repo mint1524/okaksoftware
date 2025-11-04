@@ -105,13 +105,13 @@ docker compose restart nginx
 ## Каталог и тарифы
 
 1. Создайте записи в `products` (`type = 'gpt'` или `vpn'`, `metadata` можно использовать для инструкций).
-2. Добавьте варианты (`product_variants`) с `digiseller_product_id` и/или статичной ссылкой на оплату (`payment_url`).
-3. Подключите Digiseller webhook на `https://<backend-domain>/api/admin/digiseller/webhook` и укажите секрет в `.env` (`OKAK_DIGISELLER_SECRET`).
+2. Добавьте варианты (`product_variants`) с ценой, валютой и при необходимости внешним идентификатором (`external_id`). Если хотите использовать собственную ссылку оплаты, заполните `payment_url` — тогда YooMoney задействован не будет.
+3. Укажите реквизиты кошелька в `.env` (`OKAK_YOOMONEY_WALLET_ACCOUNT`, `OKAK_YOOMONEY_WALLET_ACCESS_TOKEN`) и, при необходимости, `OKAK_YOOMONEY_QUICKPAY_SUCCESS_URL` для редиректа после оплаты.
 
 ## Потоки
 
-- Покупатель в боте выбирает товар → бот вызывает `/api/purchases`, получает `payment_url` и отправляет покупателю.
-- Digiseller оповещает webhook → backend генерирует `token`, сохраняет ссылку и отправляет в ответе `token_url`.
+- Покупатель в боте выбирает товар → бот вызывает `/api/purchases`, получает ссылку на оплату и отправляет её пользователю.
+- YooMoney Wallet регистрирует перевод на кошелёк с указанным `label`; backend проверяет поступление через `/api/users/{telegram_id}/purchases` (или вручную endpoint `/api/admin/payments/yoomoney/check`) и генерирует токен.
 - Бот по запросу пользователя (`Мои покупки`) показывает активные ссылки.
 - Клиент переходит по `https://<domain>/<token>` → React приложение запрашивает `/api/tokens/{token}` и визуализирует сценарий (`gpt`, `vpn` и т.д.).
 - После нажатия "Товар получен" / подтверждения автоматикой — backend инвалидирует токен.
@@ -135,7 +135,9 @@ alembic upgrade head
 
 - `OKAK_TELEGRAM_BOT_TOKEN`
 - `OKAK_DATABASE_URL`
-- `OKAK_DIGISELLER_*` (для рабочей интеграции)
+- `OKAK_YOOMONEY_WALLET_ACCOUNT`
+- `OKAK_YOOMONEY_WALLET_ACCESS_TOKEN`
+- `OKAK_YOOMONEY_QUICKPAY_SUCCESS_URL`
 - `OKAK_DOMAIN_GPT`, `OKAK_DOMAIN_VPN`
 - `VITE_API_BASE_URL` (обычно `/api` для работы за reverse-proxy)
 
@@ -144,21 +146,16 @@ alembic upgrade head
 - `GET /api/healthz` — проверка здоровья backend
 - `GET /api/products` — каталог
 - `POST /api/purchases` — создать сессию покупки
-- `POST /api/admin/digiseller/webhook` — вход Digiseller
+- `POST /api/admin/payments/yoomoney/check` — принудительная проверка платежа по `payment_label`
 - `GET /api/tokens/{token}` — данные токена для фронтенда
 - `GET /api/users/{telegram_id}/purchases` — покупки пользователя
 
-## Тестовый сценарий без Digiseller
+## Тестовый сценарий (YooMoney Wallet)
 
-1. Создайте товар и тариф вручную в БД, задайте `payment_url` на любой URL оплаты.
-2. В боте выберите товар → получите ссылку на оплату.
-3. Вручную вызовите:
-   ```bash
-   curl -X POST http://localhost:8000/api/admin/digiseller/webhook \
-     -H 'Content-Type: application/json' \
-     -d '{"order_id": "test-order", "status": "paid"}'
-   ```
-4. Токен появится в `Мои покупки`, можно переходить на React страницу.
+1. Создайте товар и тариф, оставьте `payment_url` пустым, чтобы использовалась ссылка YooMoney.
+2. В боте выберите товар → получите ссылку вида `https://yoomoney.ru/quickpay/...`.
+3. Выполните перевод на кошелёк с тем же `label`, что указан в ссылке (можно указать `comment`, чтобы видеть назначение).
+4. Откройте «Мои покупки» в боте — после проверки операции статус изменится на `paid`, и появится ссылка с токеном.
 
 ## Дополнительно
 

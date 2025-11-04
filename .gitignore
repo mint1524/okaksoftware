@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.env
+*.env
+.venv/
+venv/
+
+# Poetry / Pipenv
+poetry.lock
+Pipfile.lock
+
+# Node
+web/node_modules/
+web/dist/
+
+# VSCode / IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Docker
+infra/db-data/
+
+# Logs
+*.log

@@ -1,0 +1,69 @@
+version: "3.10"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${OKAK_POSTGRES_DB:-okak}
+      POSTGRES_USER: ${OKAK_POSTGRES_USER:-okak}
+      POSTGRES_PASSWORD: ${OKAK_POSTGRES_PASSWORD:-okak}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: infra/backend/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: .
+      dockerfile: infra/bot/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/web/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.25-alpine
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/static/vpn:/srv/static/vpn:ro
+    depends_on:
+      - backend
+      - web
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: infra/backend/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: alembic upgrade head
+    profiles:
+      - migrate
+
+volumes:
+  db_data: {}

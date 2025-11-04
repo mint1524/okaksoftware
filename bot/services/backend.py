@@ -10,7 +10,11 @@ from ..config import settings
 class BackendClient:
     def __init__(self, base_url: str | None = None):
         self.base_url = base_url or settings.backend_api_url.rstrip("/")
-        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=15.0)
+        self._client = httpx.AsyncClient(
+            base_url=self.base_url,
+            timeout=15.0,
+            follow_redirects=True,
+        )
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -41,4 +45,3 @@ class BackendClient:
             return None
         response.raise_for_status()
         return response.json()
-

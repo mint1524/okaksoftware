@@ -3,6 +3,7 @@ from __future__ import annotations
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.types import CallbackQuery, Message
+from aiogram.exceptions import TelegramBadRequest
 
 from ..config import settings
 from ..keyboards.menu import (
@@ -23,6 +24,14 @@ router = Router()
 
 def _backend_client() -> BackendClient:
     return BackendClient()
+
+
+async def safe_edit_text(message: Message, text: str, **kwargs) -> None:
+    try:
+        await message.edit_text(text, **kwargs)
+    except TelegramBadRequest as exc:  # message not modified – ignore
+        if "message is not modified" not in str(exc):
+            raise
 
 
 @router.message(CommandStart())
@@ -55,25 +64,29 @@ async def handle_menu_callback(query: CallbackQuery, callback_data: MenuCallback
         action = callback_data.action
         user = query.from_user
         if action == "back_main":
-            await query.message.edit_text(
+            await safe_edit_text(
+                query.message,
                 "Главное меню",
                 reply_markup=main_menu_kb().as_markup(),
             )
         elif action == "catalog":
             products = await client.list_products()
-            await query.message.edit_text(
+            await safe_edit_text(
+                query.message,
                 "Выберите товар:",
                 reply_markup=product_list_kb(products).as_markup(),
             )
         elif action == "orders" and user:
             purchases = await client.get_user_purchases(user.id)
             if purchases:
-                await query.message.edit_text(
+                await safe_edit_text(
+                    query.message,
                     "Ваши покупки:",
                     reply_markup=purchases_kb(purchases).as_markup(),
                 )
             else:
-                await query.message.edit_text(
+                await safe_edit_text(
+                    query.message,
                     "У вас пока нет покупок.",
                     reply_markup=main_menu_kb().as_markup(),
                 )
@@ -87,7 +100,7 @@ async def handle_menu_callback(query: CallbackQuery, callback_data: MenuCallback
                     f"ID: {profile.get('telegram_id')}\n"
                     f"Username: @{profile.get('username') or '—'}\n"
                 )
-            await query.message.edit_text(text, reply_markup=main_menu_kb().as_markup())
+            await safe_edit_text(query.message, text, reply_markup=main_menu_kb().as_markup())
         elif action == "support":
             kb = support_button(settings.support_username)
             await query.message.answer(
@@ -114,7 +127,8 @@ async def handle_product(query: CallbackQuery, callback_data: ProductCallback) -
             return
         variants = product.get("variants", [])
         description = product.get("description") or "Описание отсутствует"
-        await query.message.edit_text(
+        await safe_edit_text(
+            query.message,
             f"{product.get('title')}\n\n{description}",
             reply_markup=variants_kb(product.get("id"), variants).as_markup(),
         )
@@ -180,7 +194,8 @@ async def handle_purchase_info(query: CallbackQuery, callback_data: PurchaseCall
             text_lines.append(f"Действительно до: {purchase.get('expires_at')}")
         if purchase.get("token_url"):
             text_lines.append(f"Ссылка: {purchase.get('token_url')}")
-        await query.message.edit_text(
+        await safe_edit_text(
+            query.message,
             "\n".join(text_lines),
             reply_markup=purchases_kb(purchases).as_markup(),
         )
